@@ -30,9 +30,9 @@ env:
   LLAMA_LOG_TIMESTAMPS: 1
 
 jobs:
-  ubuntu-latest-cmake-cuda:
+  ubuntu-11-8-cmake-cuda:
     runs-on: ubuntu-latest
-    container: nvidia/cuda:12.6.2-devel-ubuntu24.04
+    container: nvidia/cuda:11.8.0-devel-ubuntu22.04
 
     steps:
         - name: Clone
@@ -211,6 +211,7 @@ jobs:
     runs-on: ubuntu-latest
 
     needs:
+      - ubuntu-11-8-cmake-cuda
       - windows-2019-cmake-cuda
 
     steps:
