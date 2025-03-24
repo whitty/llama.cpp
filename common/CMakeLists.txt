@@ -81,6 +81,8 @@ if (BUILD_SHARED_LIBS)
     set_target_properties(${TARGET} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
+target_sources(${TARGET} PUBLIC FILE_SET common_HEADERS TYPE HEADERS FILES common.h arg.h base64.hpp chat.h console.h sampling.h speculative.h)
+
 set(LLAMA_COMMON_EXTRA_LIBS build_info)
 
 # Use curl to download model url

@@ -199,6 +199,11 @@ set_target_properties(llama
 
 install(TARGETS llama LIBRARY PUBLIC_HEADER)
 
+if (LLAMA_BUILD_COMMON)
+    install(TARGETS common LIBRARY PUBLIC_HEADER)
+    install(TARGETS common FILE_SET common_HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/common)
+endif()
+
 configure_package_config_file(
         ${CMAKE_CURRENT_SOURCE_DIR}/cmake/llama-config.cmake.in
         ${CMAKE_CURRENT_BINARY_DIR}/llama-config.cmake
