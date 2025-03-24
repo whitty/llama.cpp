@@ -19,27 +19,47 @@ env:
   LLAMA_LOG_TIMESTAMPS: 1
 
 jobs:
-  ubuntu-latest-cmake-cuda:
+  ubuntu-cmake-cuda:
     runs-on: ubuntu-latest
-    container: nvidia/cuda:12.6.2-devel-ubuntu24.04
+    strategy:
+      matrix:
+        include:
+          - ver: 'ubuntu22.04'
+            cuda: '11.8.0'
+            build: '22.04-x64'
+          - ver: 'ubuntu20.04'
+            cuda: '11.8.0'
+            build: '20.04-x64'
+
+    container: nvidia/cuda:${{ matrix.cuda }}-devel-${{ matrix.ver }}
 
     steps:
-        - name: Clone
-          id: checkout
-          uses: actions/checkout@v4
-
         - name: Install dependencies
           env:
             DEBIAN_FRONTEND: noninteractive
           run: |
               apt update
-              apt install -y cmake build-essential ninja-build libgomp1 git libcurl4-openssl-dev
+              apt install -y cmake build-essential ninja-build libgomp1 git libcurl4-openssl-dev zip
+
+        - name: Clone
+          id: checkout
+          uses: actions/checkout@v4
+
+        - name: Fixup git checkout
+          run: |
+            git config --global --add safe.directory $(pwd)
+            git rev-parse
 
         - name: ccache
           uses: hendrikmuhs/ccache-action@v1.2.16
           with:
-            key: ubuntu-latest-cmake-cuda
+            key: ubuntu-${{ matrix.ver }}-cmake-cuda-${{ matrix.cuda}}
             evict-old-files: 1d
+
+        - name: Setup cmake
+          uses: jwlawson/actions-setup-cmake@v2
+          with:
+            cmake-version: '3.28.x'
 
         - name: Build with CMake
           run: |
@@ -51,6 +71,7 @@ jobs:
               -DGGML_NATIVE=OFF \
               -DGGML_CUDA=ON
             cmake --build build
+            cmake --install build --config Release --prefix build/stage
 
   windows-2019-cmake-cuda:
     runs-on: windows-2019
