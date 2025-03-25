@@ -54,6 +54,11 @@ jobs:
             key: ubuntu-latest-cmake-cuda
             evict-old-files: 1d
 
+        - name: Setup cmake
+          uses: jwlawson/actions-setup-cmake@v2
+          with:
+            cmake-version: '3.28.x'
+
         - name: Build with CMake
           run: |
             cmake -S . -B build -G Ninja \
