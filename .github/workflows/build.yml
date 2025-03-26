@@ -55,6 +55,11 @@ jobs:
           with:
             fetch-depth: 0
 
+        - name: Fixup git checkout
+          run: |
+            git config --global --add safe.directory $(pwd)
+            git rev-parse
+
         - name: ccache
           uses: hendrikmuhs/ccache-action@v1.2.16
           with:
