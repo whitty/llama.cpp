@@ -32,7 +32,13 @@ env:
 jobs:
   ubuntu-11-8-cmake-cuda:
     runs-on: ubuntu-latest
-    container: nvidia/cuda:11.8.0-devel-ubuntu22.04
+    strategy:
+      matrix:
+        include:
+          - ver: 'ubuntu22.04'
+            build: '22.04-x64'
+
+    container: nvidia/cuda:11.8.0-devel-${{ matrix.ver }}
 
     steps:
         - name: Clone
@@ -69,6 +75,35 @@ jobs:
               -DGGML_NATIVE=OFF \
               -DGGML_CUDA=ON
             cmake --build build
+            cmake --install build --config Release --prefix build/stage
+
+        - name: Determine tag name
+          id: tag
+          shell: bash
+          run: |
+            BUILD_NUMBER="$(git rev-list --count HEAD)"
+            SHORT_HASH="$(git rev-parse --short=7 HEAD)"
+            if [[ "${{ env.BRANCH_NAME }}" == "master" ]]; then
+              echo "name=b${BUILD_NUMBER}" >> $GITHUB_OUTPUT
+            else
+              SAFE_NAME=$(echo "${{ env.BRANCH_NAME }}" | tr '/' '-')
+              echo "name=${SAFE_NAME}-b${BUILD_NUMBER}-${SHORT_HASH}" >> $GITHUB_OUTPUT
+            fi
+
+        - name: Pack artifacts
+          id: pack_artifacts
+          if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
+          run: |
+            cp LICENSE ./build/stage
+            cp examples/run/linenoise.cpp/LICENSE ./build/stage/LICENSE.linenoise.cpp
+            zip -r llama-${{ steps.tag.outputs.name }}-bin-ubuntu-${{ matrix.build }}.zip ./build/stage/*
+
+        - name: Upload artifacts
+          if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
+          uses: actions/upload-artifact@v4
+          with:
+            path: llama-${{ steps.tag.outputs.name }}-bin-ubuntu-${{ matrix.build }}.zip
+            name: llama-bin-ubuntu-${{ matrix.build }}.zip
 
   windows-2019-cmake-cuda:
     runs-on: windows-2019
