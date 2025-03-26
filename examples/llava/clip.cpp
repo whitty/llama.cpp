@@ -2,6 +2,7 @@
 // so there might be still unnecessary artifacts hanging around
 // I'll gradually clean and extend it
 // Note: Even when using identical normalized image inputs (see normalize_image_u8_to_f32()) we have a significant difference in resulting embeddings compared to pytorch
+
 #include "clip.h"
 #include "ggml.h"
 #include "ggml-cpu.h"
@@ -9,9 +10,9 @@
 #include "ggml-backend.h"
 #include "gguf.h"
 
-//#ifdef GGML_USE_CUDA
-//#include "ggml-cuda.h"
-//#endif
+#ifdef GGML_USE_CUDA
+#include "ggml-cuda.h"
+#endif
 //
 //#ifdef GGML_USE_SYCL
 //#include "ggml-sycl.h"
@@ -1296,10 +1297,10 @@ struct clip_ctx * clip_model_load(const char * fname, const int verbosity = 1) {
         }
     }
 
-//#ifdef GGML_USE_CUDA
-//    new_clip->backend = ggml_backend_cuda_init(0);
-//    LOG_INF("%s: CLIP using CUDA backend\n", __func__);
-//#endif
+#ifdef GGML_USE_CUDA
+    new_clip->backend = ggml_backend_cuda_init(0);
+    LOG_INF("%s: CLIP using CUDA backend\n", __func__);
+#endif
 //
 //#ifdef GGML_USE_METAL
 //    new_clip->backend = ggml_backend_metal_init();

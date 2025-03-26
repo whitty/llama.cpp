@@ -30,6 +30,10 @@ if(TARGET BUILD_INFO)
     add_dependencies(llava BUILD_INFO)
 endif()
 
+if(GGML_CUDA)
+    add_compile_definitions(PRIVATE GGML_USE_CUDA)
+endif()
+
 set(TARGET llama-llava-cli)
 add_executable(${TARGET} llava-cli.cpp)
 set_target_properties(${TARGET} PROPERTIES OUTPUT_NAME llama-llava-cli)
