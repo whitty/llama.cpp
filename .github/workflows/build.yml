@@ -113,6 +113,7 @@ jobs:
             name: llama-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.zip
 
   windows-2019-cmake-cuda:
+    if: false
     runs-on: windows-2019
 
     strategy:
@@ -259,7 +260,7 @@ jobs:
 
     needs:
       - ubuntu-cmake-cuda
-      - windows-2019-cmake-cuda
+#      - windows-2019-cmake-cuda
 
     steps:
       - name: Clone
