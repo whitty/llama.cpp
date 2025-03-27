@@ -102,7 +102,8 @@ jobs:
           run: |
             cp LICENSE ./build/stage
             cp examples/run/linenoise.cpp/LICENSE ./build/stage/LICENSE.linenoise.cpp
-            zip -r llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.zip ./build/stage/*
+            tar -C build/stage -zcf llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.tar.gz .
+            zip -0 llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.zip llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.tar.gz
 
         - name: Upload artifacts
           if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
@@ -294,7 +295,7 @@ jobs:
 
       - name: Move artifacts
         id: move_artifacts
-        run: mkdir -p ./artifact/release && mv ./artifact/*/*.zip ./artifact/release
+        run: mkdir -p ./artifact/release && mv -v ./artifact/*/*.zip ./artifact/release
 
       - name: Create release
         id: create_release
