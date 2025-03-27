@@ -47,7 +47,7 @@ jobs:
             DEBIAN_FRONTEND: noninteractive
           run: |
               apt update
-              apt install -y cmake build-essential ninja-build libgomp1 git zip
+              apt install -y cmake build-essential ninja-build libgomp1 git
 
         - name: Clone
           id: checkout
@@ -102,14 +102,14 @@ jobs:
           run: |
             cp LICENSE ./build/stage
             cp examples/run/linenoise.cpp/LICENSE ./build/stage/LICENSE.linenoise.cpp
-            zip -r llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.zip ./build/stage/*
+            tar -C build/stage -zcf llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.tar.gz .
 
         - name: Upload artifacts
           if: ${{ ( github.event_name == 'push' && github.ref == 'refs/heads/master' ) || github.event.inputs.create_release == 'true' }}
           uses: actions/upload-artifact@v4
           with:
-            path: llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.zip
-            name: llama-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.zip
+            path: llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.tar.gz
+            name: llama-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.tar.gz
 
   windows-2019-cmake-cuda:
     runs-on: windows-2019
@@ -294,7 +294,7 @@ jobs:
 
       - name: Move artifacts
         id: move_artifacts
-        run: mkdir -p ./artifact/release && mv ./artifact/*/*.zip ./artifact/release
+        run: mkdir -p ./artifact/release && mv  ./artifact/*/*.tar.gz ./artifact/*/*.zip ./artifact/release
 
       - name: Create release
         id: create_release
