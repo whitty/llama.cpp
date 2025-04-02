@@ -38,6 +38,9 @@ jobs:
           - ver: 'ubuntu22.04'
             cuda: '11.8.0'
             build: '22.04-x64'
+          - ver: 'ubuntu20.04'
+            cuda: '11.8.0'
+            build: '20.04-x64'
 
     container: nvidia/cuda:${{ matrix.cuda }}-devel-${{ matrix.ver }}
 
