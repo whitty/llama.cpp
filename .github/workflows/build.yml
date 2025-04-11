@@ -24,6 +24,15 @@ jobs:
     strategy:
       matrix:
         include:
+          - ver: 'ubuntu24.04'
+            cuda: '12.8.1'
+            build: '24.04-x64'
+          - ver: 'ubuntu22.04'
+            cuda: '12.8.1'
+            build: '22.04-x64'
+          - ver: 'ubuntu20.04'
+            cuda: '12.8.1'
+            build: '20.04-x64'
           - ver: 'ubuntu22.04'
             cuda: '11.8.0'
             build: '22.04-x64'
@@ -78,7 +87,7 @@ jobs:
 
     strategy:
       matrix:
-        cuda: ['11.8']
+        cuda: ['12.8']
 
     steps:
       - name: Clone
