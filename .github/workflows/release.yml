@@ -29,18 +29,23 @@ jobs:
           - ver: 'ubuntu24.04'
             cuda: '12.8.1'
             build: '24.04-x64'
+            architectures: '50-real;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;120-real'
           - ver: 'ubuntu22.04'
             cuda: '12.8.1'
             build: '22.04-x64'
+            architectures: '50-real;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;120-real'
           - ver: 'ubuntu20.04'
             cuda: '12.8.1'
             build: '20.04-x64'
+            architectures: '50-real;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;120-real'
           - ver: 'ubuntu22.04'
             cuda: '11.8.0'
             build: '22.04-x64'
+            architectures: '50-real;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real'
           - ver: 'ubuntu20.04'
             cuda: '11.8.0'
             build: '20.04-x64'
+            architectures: '50-real;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real'
 
     container: nvidia/cuda:${{ matrix.cuda }}-devel-${{ matrix.ver }}
 
@@ -108,7 +113,9 @@ jobs:
 
     strategy:
       matrix:
-        cuda: ['12.8']
+        include:
+          - cuda: '12.8'
+            architectures: '50-real;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;120-real'
 
     steps:
       - name: Clone
