@@ -81,7 +81,7 @@ jobs:
           run: |
             cmake -S . -B build -G Ninja \
               -DCMAKE_BUILD_TYPE=Release \
-              -DCMAKE_CUDA_ARCHITECTURES=89-real \
+              -DCMAKE_CUDA_ARCHITECTURES="50-real;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;120-real" \
               -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
               -DLLAMA_FATAL_WARNINGS=ON \
               -DGGML_NATIVE=OFF \
@@ -237,6 +237,7 @@ jobs:
           call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
           cmake -S . -B build -G "Ninja Multi-Config" ^
             -DLLAMA_BUILD_SERVER=ON ^
+            -DCMAKE_CUDA_ARCHITECTURES=50-real;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;120-real ^
             -DGGML_NATIVE=OFF ^
             -DGGML_CUDA=ON ^
             -DGGML_RPC=ON
