@@ -91,6 +91,7 @@ jobs:
               -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
               -DLLAMA_FATAL_WARNINGS=ON \
               -DGGML_NATIVE=OFF \
+              -DGGML_CUDA_FA_ALL_QUANTS=ON \
               -DGGML_CUDA=ON
             cmake --build build
             cmake --install build --config Release --prefix build/stage
@@ -144,6 +145,7 @@ jobs:
             -DGGML_BACKEND_DL=ON ^
             -DGGML_CPU_ALL_VARIANTS=ON ^
             -DGGML_CUDA=ON ^
+            -DGGML_CUDA_FA_ALL_QUANTS=ON ^
             -DGGML_RPC=ON ^
             -DCURL_LIBRARY="%CURL_PATH%/lib/libcurl.dll.a" -DCURL_INCLUDE_DIR="%CURL_PATH%/include"
           set /A NINJA_JOBS=%NUMBER_OF_PROCESSORS%-1
