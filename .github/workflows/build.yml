@@ -97,6 +97,60 @@ jobs:
             cmake --build build
             cmake --install build --config Release --prefix build/stage
 
+  jetson-arm64:
+    runs-on: ubuntu-22.04-arm
+    strategy:
+      matrix:
+        include:
+          - ver: '36.4.0'
+            cuda: '12.6'
+            build: 'jp-36.4'
+            architectures: '53-real;72-real;87-real'
+
+    container: nvcr.io/nvidia/l4t-jetpack:r${{ matrix.ver }}
+    steps:
+        - name: Install dependencies
+          env:
+            DEBIAN_FRONTEND: noninteractive
+          run: |
+              apt update
+              apt install -y cmake build-essential ninja-build libgomp1 git libcurl4-openssl-dev zip
+
+        - name: Clone
+          id: checkout
+          uses: actions/checkout@v4
+
+        - name: Fixup git checkout
+          run: |
+            uname -m
+            git config --global --add safe.directory $(pwd)
+            git rev-parse
+
+        - name: ccache
+          uses: hendrikmuhs/ccache-action@v1.2.16
+          with:
+            key: build-${{ matrix.ver }}-cmake-cuda-${{ matrix.cuda}}-${{ matrix.build }}
+            evict-old-files: 1d
+
+        - name: Setup cmake
+          uses: whitty/actions-setup-cmake@linux-aarch64
+          with:
+            cmake-version: '3.28.x'
+
+        - name: Build with CMake
+          run: |
+            cmake -S . -B build -G Ninja \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_CUDA_ARCHITECTURES="${{ matrix.architectures }}" \
+              -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+              -DLLAMA_FATAL_WARNINGS=ON \
+              -DGGML_NATIVE=OFF \
+              -DGGML_BACKEND_DL=ON \
+              -DGGML_CUDA_FA_ALL_QUANTS=ON \
+              -DGGML_CUDA=ON
+            cmake --build build
+            cmake --install build --config Release --prefix build/stage
+
   ubuntu-cmake-cuda-arm:
     runs-on: ubuntu-22.04-arm
     strategy:
