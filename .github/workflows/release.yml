@@ -131,7 +131,7 @@ jobs:
           cmake -S . -B build -G "Ninja Multi-Config" ^
             -DGGML_BACKEND_DL=ON ^
             -DGGML_NATIVE=OFF ^
-            -DGGML_CPU=OFF ^
+            -DGGML_CPU_ALL_VARIANTS=ON ^
             -DGGML_CUDA=ON ^
             -DLLAMA_CURL=OFF
           set /A NINJA_JOBS=%NUMBER_OF_PROCESSORS%-1
