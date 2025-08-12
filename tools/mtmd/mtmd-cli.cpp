@@ -284,7 +284,8 @@ int main(int argc, char ** argv) {
     if (is_single_turn) {
         g_is_generating = true;
         if (params.prompt.find("<__image__>") == std::string::npos) {
-            params.prompt += " <__image__>";
+            //params.prompt += " <__image__>";
+            params.prompt = " <__image__>" + params.prompt;
         }
         common_chat_msg msg;
         msg.role = "user";
