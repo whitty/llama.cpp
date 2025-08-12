@@ -4,8 +4,11 @@
 
 #include <algorithm>
 #include <array>
+#include <cassert>
 #include <cstdint>
 #include <cstdio>
+#include <functional>
+#include <memory>
 #include <random>
 #include <string>
 #include <vector>
@@ -154,8 +157,14 @@ static void helper_write(FILE * file, const void * data, const size_t nbytes) {
     GGML_ASSERT(fwrite(data, 1, nbytes, file) == nbytes);
 }
 
-static FILE * get_handcrafted_file(const unsigned int seed, const enum handcrafted_file_type hft, const int extra_bytes = 0) {
-    FILE * file = tmpfile();
+static FILE * get_handcrafted_file(std::string & path, const unsigned int seed, const enum handcrafted_file_type hft, const int extra_bytes = 0) {
+    if (auto path_tmp = std::tmpnam(nullptr)) {
+        path = path_tmp;
+    } else {
+        return nullptr;
+    }
+
+    FILE * file = std::fopen(path.c_str(), "wbx+");
 
     if (!file) {
         return file;
@@ -693,17 +702,21 @@ static std::pair<int, int> test_handcrafted_file(const unsigned int seed) {
 
     for (enum handcrafted_file_type hft : hfts) {
         printf("%s: handcrafted_file_type=%s\n", __func__, handcrafted_file_type_name(hft).c_str());
-        FILE * file = get_handcrafted_file(seed, hft);
+        std::string file_path;
+        std::unique_ptr<std::FILE, std::function<void(std::FILE *)>> file(get_handcrafted_file(file_path, seed, hft),
+                                                                          [&file_path](std::FILE * file) {
+                                                                              assert(file);
 
-#ifdef _WIN32
+                                                                              if (std::fclose(file) == 0) {
+                                                                                  (void) std::remove(file_path.c_str());
+                                                                              }
+                                                                          });
+
         if (!file) {
-            printf("failed to create tmpfile(), needs elevated privileges on Windows");
+            printf("failed to create temporary file");
             printf("skipping tests");
             continue;
         }
-#else
-        GGML_ASSERT(file);
-#endif // _WIN32
 
         struct ggml_context * ctx = nullptr;
         struct gguf_init_params gguf_params = {
@@ -711,7 +724,7 @@ static std::pair<int, int> test_handcrafted_file(const unsigned int seed) {
             /*ctx      =*/ hft >= offset_has_data ? &ctx : nullptr,
         };
 
-        struct gguf_context * gguf_ctx = gguf_init_from_file_impl(file, gguf_params);
+        struct gguf_context * gguf_ctx = gguf_init_from_file(file_path.c_str(), gguf_params);
 
         if (expect_context_not_null(hft)) {
             printf("%s:   - context_not_null: ", __func__);
@@ -774,7 +787,7 @@ static std::pair<int, int> test_handcrafted_file(const unsigned int seed) {
 
         if (expect_context_not_null(hft) && hft >= offset_has_data) {
             printf("%s:   - check_tensor_data: ", __func__);
-            if (handcrafted_check_tensor_data(gguf_ctx, seed, file)) {
+            if (handcrafted_check_tensor_data(gguf_ctx, seed, file.get())) {
                 printf("\033[1;32mOK\033[0m\n");
                 npass++;
             } else {
@@ -783,7 +796,6 @@ static std::pair<int, int> test_handcrafted_file(const unsigned int seed) {
             ntest++;
         }
 
-        fclose(file);
         if (gguf_ctx) {
             ggml_free(ctx);
             gguf_free(gguf_ctx);
@@ -1082,23 +1094,36 @@ static std::pair<int, int> test_roundtrip(ggml_backend_dev_t dev, const unsigned
         bbuf       = result.buffer;
     }
 
-    FILE * file = tmpfile();
+    std::string file_path;
 
-#ifdef _WIN32
-    if (!file) {
-        printf("failed to create tmpfile(), needs elevated privileges on Windows");
+    if (auto file_path_tmp = std::tmpnam(nullptr)) {
+        file_path = file_path_tmp;
+    } else {
+        printf("failed to create temporary file name");
         printf("skipping tests");
         return std::make_pair(0, 0);
     }
-#else
-    GGML_ASSERT(file);
-#endif // _WIN32
+
+    std::unique_ptr<std::FILE, std::function<void(std::FILE *)>> file(std::fopen(file_path.c_str(), "wbx+"),
+                                                                      [&file_path](std::FILE * file) {
+                                                                          assert(file);
+
+                                                                          if (std::fclose(file) == 0) {
+                                                                              (void) std::remove(file_path.c_str());
+                                                                          }
+                                                                      });
+
+    if (!file) {
+        printf("failed to create temporary file");
+        printf("skipping tests");
+        return std::make_pair(0, 0);
+    }
 
     {
         std::vector<int8_t> buf;
         gguf_write_to_buf(gguf_ctx_0, buf, only_meta);
-        GGML_ASSERT(fwrite(buf.data(), 1, buf.size(), file) == buf.size());
-        rewind(file);
+        GGML_ASSERT(fwrite(buf.data(), 1, buf.size(), file.get()) == buf.size());
+        rewind(file.get());
     }
 
     struct ggml_context * ctx_1 = nullptr;
@@ -1106,7 +1131,7 @@ static std::pair<int, int> test_roundtrip(ggml_backend_dev_t dev, const unsigned
         /*no_alloc =*/ false,
         /*ctx      =*/ only_meta ? nullptr : &ctx_1,
     };
-    struct gguf_context * gguf_ctx_1 = gguf_init_from_file_impl(file, gguf_params);
+    struct gguf_context * gguf_ctx_1 = gguf_init_from_file(file_path.c_str(), gguf_params);
 
     printf("%s: same_version: ", __func__);
     if (gguf_get_version(gguf_ctx_0) == gguf_get_version(gguf_ctx_1)) {
@@ -1188,7 +1213,6 @@ static std::pair<int, int> test_roundtrip(ggml_backend_dev_t dev, const unsigned
     gguf_free(gguf_ctx_0);
     gguf_free(gguf_ctx_1);
     ggml_backend_free(backend);
-    fclose(file);
 
     printf("\n");
     return std::make_pair(npass, ntest);
