@@ -192,6 +192,7 @@ add_library(ggml-base
             ../include/ggml-backend.h
             ../include/ggml-cpp.h
             ../include/ggml-opt.h
+            ../include/gguf-reader.h
             ../include/gguf.h
             ggml.c
             ggml-alloc.c
@@ -201,7 +202,8 @@ add_library(ggml-base
             ggml-threading.h
             ggml-quants.c
             ggml-quants.h
-            gguf.cpp)
+            gguf.cpp
+            gguf-reader.cpp)
 
 target_include_directories(ggml-base PRIVATE .)
 if (GGML_BACKEND_DL)
