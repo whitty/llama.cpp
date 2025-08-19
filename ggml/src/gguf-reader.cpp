@@ -1,13 +1,14 @@
 #include "gguf-reader.h"
 
 #include "gguf.h"
+#include "gguf-reader-file.h"
 
 #include <cstddef>
 #include <memory>
 
 struct default_impl_factory : public gguf_reader_impl_factory {
     std::unique_ptr<gguf_reader_impl> build_for(const std::filesystem::path &) override {
-        return nullptr;
+        return std::make_unique<gguf_reader_file>();
     }
 };
 

@@ -4,10 +4,11 @@
 #include "gguf.h"
 
 #include <cstddef>
-#include <ios>
-#include <string>
-#include <vector>
+#include <cstdint>
 #include <filesystem>
+#include <string>
+#include <type_traits>
+#include <vector>
 
 #ifdef GGML_SHARED
 #    if defined(_WIN32) && !defined(__MINGW32__)

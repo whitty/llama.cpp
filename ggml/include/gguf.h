@@ -68,6 +68,7 @@ extern "C" {
     };
 
     struct gguf_context;
+    struct gguf_reader_impl_factory;
 
     struct gguf_init_params {
         bool no_alloc;
@@ -78,6 +79,9 @@ extern "C" {
 
     GGML_API struct gguf_context * gguf_init_empty(void);
     GGML_API struct gguf_context * gguf_init_from_file(const char * fname, struct gguf_init_params params);
+
+    GGML_API void gguf_set_default_reader_impl(struct gguf_reader_impl_factory * factory);
+
     //GGML_API struct gguf_context * gguf_init_from_buffer(..);
 
     GGML_API void gguf_free(struct gguf_context * ctx);
