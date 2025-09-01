@@ -32,8 +32,13 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
-#define LOG_INF(...) fprintf(stdout, __VA_ARGS__)
-#define LOG_ERR(...) fprintf(stderr, __VA_ARGS__)
+//#define LOG_INF(...) fprintf(stdout, __VA_ARGS__)
+//#define LOG_ERR(...) fprintf(stderr, __VA_ARGS__)
+
+static void printf_stub(const char*, ...) {}
+
+#define LOG_INF(...) printf_stub(__VA_ARGS__)
+#define LOG_ERR(...) printf_stub(__VA_ARGS__)
 
 size_t mtmd_helper_get_n_tokens(const mtmd_input_chunks * chunks) {
     size_t n_tokens = 0;
