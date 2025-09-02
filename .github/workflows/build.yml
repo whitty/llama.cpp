@@ -4,7 +4,7 @@ on:
   workflow_dispatch: # allows manual triggering
   push:
     branches:
-      - master
+      - build_test_b6337_2
     paths: [
       '.github/workflows/build.yml',
       '.github/workflows/build-linux-cross.yml',
