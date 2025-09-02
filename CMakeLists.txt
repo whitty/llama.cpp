@@ -270,7 +270,7 @@ set_target_properties(llama
     PROPERTIES
         PUBLIC_HEADER "${LLAMA_PUBLIC_HEADERS}")
 
-install(TARGETS llama LIBRARY PUBLIC_HEADER)
+install(TARGETS llama common LIBRARY PUBLIC_HEADER)
 
 if (LLAMA_BUILD_COMMON)
     install(TARGETS common LIBRARY PUBLIC_HEADER)
