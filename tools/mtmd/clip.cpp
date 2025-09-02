@@ -9,6 +9,7 @@
 #include "ggml-alloc.h"
 #include "ggml-backend.h"
 #include "gguf.h"
+#include "gguf-reader.h"
 
 #include <cassert>
 #include <cmath>
@@ -1841,9 +1842,9 @@ struct clip_model_loader {
         // load data
         {
             std::vector<uint8_t> read_buf;
+            struct gguf_reader gr(fname);
 
-            auto fin = std::ifstream(fname, std::ios::binary);
-            if (!fin) {
+            if (!gr.open()) {
                 throw std::runtime_error(string_format("%s: failed to open %s\n", __func__, fname.c_str()));
             }
 
@@ -1854,22 +1855,21 @@ struct clip_model_loader {
             for (auto & t : tensors_to_load) {
                 ggml_tensor * cur = ggml_get_tensor(ctx_clip.ctx_data.get(), t->name);
                 const size_t offset = tensor_offset[t->name];
-                fin.seekg(offset, std::ios::beg);
-                if (!fin) {
+                if (!gr.position_set(offset))
+                {
                     throw std::runtime_error(string_format("%s: failed to seek for tensor %s\n", __func__, t->name));
                 }
                 size_t num_bytes = ggml_nbytes(cur);
                 if (ggml_backend_buft_is_host(buft)) {
                     // for the CPU and Metal backend, we can read directly into the tensor
-                    fin.read(reinterpret_cast<char *>(cur->data), num_bytes);
+                    gr.read(reinterpret_cast<char *>(cur->data), num_bytes);
                 } else {
                     // read into a temporary buffer first, then copy to device memory
                     read_buf.resize(num_bytes);
-                    fin.read(reinterpret_cast<char *>(read_buf.data()), num_bytes);
+                    gr.read(reinterpret_cast<char *>(read_buf.data()), num_bytes);
                     ggml_backend_tensor_set(cur, read_buf.data(), 0, num_bytes);
                 }
             }
-            fin.close();
 
             LOG_DBG("%s: loaded %zu tensors from %s\n", __func__, tensors_to_load.size(), fname.c_str());
         }

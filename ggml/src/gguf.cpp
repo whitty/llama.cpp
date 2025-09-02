@@ -2,6 +2,7 @@
 #include "ggml-backend.h"
 #include "ggml-impl.h"
 #include "gguf.h"
+#include "gguf-reader.h"
 
 #include <cinttypes>
 #include <cstddef>
@@ -216,82 +217,12 @@ struct gguf_context {
     void * data = nullptr;
 };
 
-struct gguf_reader {
-    FILE * file;
-
-    gguf_reader(FILE * file) : file(file) {}
-
-    template <typename T>
-    bool read(T & dst) const {
-        return fread(&dst, 1, sizeof(dst), file) == sizeof(dst);
-    }
-
-    template <typename T>
-    bool read(std::vector<T> & dst, const size_t n) const {
-        dst.resize(n);
-        for (size_t i = 0; i < dst.size(); ++i) {
-            if constexpr (std::is_same<T, bool>::value) {
-                bool tmp;
-                if (!read(tmp)) {
-                    return false;
-                }
-                dst[i] = tmp;
-            } else {
-                if (!read(dst[i])) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    bool read(bool & dst) const {
-        int8_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
-        }
-        dst = tmp != 0;
-        return true;
-    }
-
-    bool read(enum ggml_type & dst) const {
-        int32_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
-        }
-        dst = ggml_type(tmp);
-        return true;
-    }
-
-    bool read(enum gguf_type & dst) const {
-        int32_t tmp = -1;
-        if (!read(tmp)) {
-            return false;
-        }
-        dst = gguf_type(tmp);
-        return true;
-    }
-
-    bool read(std::string & dst) const {
-        uint64_t size = 0;
-        if (!read(size)) {
-            return false;
-        }
-        dst.resize(size);
-        return fread(dst.data(), 1, dst.length(), file) == dst.length();
-    }
-
-    bool read(void * dst, const size_t size) const {
-        return fread(dst, 1, size, file) == size;
-    }
-};
-
 struct gguf_context * gguf_init_empty(void) {
     return new gguf_context;
 }
 
 template<typename T>
-bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct gguf_kv> & kv, const std::string & key, const bool is_array, const size_t n) {
+bool gguf_read_emplace_helper(struct gguf_reader & gr, std::vector<struct gguf_kv> & kv, const std::string & key, const bool is_array, const size_t n) {
     if (is_array) {
         std::vector<T> value;
         try {
@@ -316,8 +247,15 @@ bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct 
     return true;
 }
 
-struct gguf_context * gguf_init_from_file_impl(FILE * file, struct gguf_init_params params) {
-    const struct gguf_reader gr(file);
+struct gguf_context * gguf_init_from_file(const char * fname, struct gguf_init_params params)
+{
+    gguf_reader gr(fname);
+
+    if (!gr.open()) {
+        GGML_LOG_ERROR("%s: failed to open reader\n", __func__);
+        return nullptr;
+    }
+
     struct gguf_context * ctx = new gguf_context;
 
     bool ok = true;
@@ -610,14 +548,14 @@ struct gguf_context * gguf_init_from_file_impl(FILE * file, struct gguf_init_par
     GGML_ASSERT(int64_t(ctx->info.size()) == n_tensors);
 
     // we require the data section to be aligned, so take into account any padding
-    if (fseek(file, GGML_PAD(ftell(file), ctx->alignment), SEEK_SET) != 0) {
+    if (!gr.position_set(GGML_PAD(gr.position(), ctx->alignment))) {
         GGML_LOG_ERROR("%s: failed to seek to beginning of data section\n", __func__);
         gguf_free(ctx);
         return nullptr;
     }
 
     // store the current file offset - this is where the data section starts
-    ctx->offset = ftell(file);
+    ctx->offset = gr.position();
 
     // compute the total size of the data section, taking into account the alignment
     {
@@ -681,7 +619,7 @@ struct gguf_context * gguf_init_from_file_impl(FILE * file, struct gguf_init_par
             }
 
             // read the binary blob with the tensor data
-            ok = ok && gr.read(data->data, ctx->size);
+            ok = ok && gr.read(data->data, ctx->size) == ctx->size;
 
             if (!ok) {
                 GGML_LOG_ERROR("%s: failed to read tensor data binary blob\n", __func__);
@@ -728,19 +666,6 @@ struct gguf_context * gguf_init_from_file_impl(FILE * file, struct gguf_init_par
     }
 
     return ctx;
-}
-
-struct gguf_context * gguf_init_from_file(const char * fname, struct gguf_init_params params) {
-    FILE * file = ggml_fopen(fname, "rb");
-
-    if (!file) {
-        GGML_LOG_ERROR("%s: failed to open GGUF file '%s'\n", __func__, fname);
-        return nullptr;
-    }
-
-    struct gguf_context * result = gguf_init_from_file_impl(file, params);
-    fclose(file);
-    return result;
 }
 
 void gguf_free(struct gguf_context * ctx) {
