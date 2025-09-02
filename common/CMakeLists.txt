@@ -112,13 +112,41 @@ add_library(${TARGET}
     jinja/parser.h
     jinja/runtime.cpp
     jinja/runtime.h
+    jinja/utils.h
     jinja/value.cpp
     jinja/value.h
     jinja/string.cpp
     jinja/string.h
     jinja/caps.cpp
     jinja/caps.h
-    )
+)
+
+target_sources(${TARGET}
+    PUBLIC
+        FILE_SET HEADERS
+            TYPE HEADERS
+            FILES
+                arg.h
+                base64.hpp
+                chat.h
+                common.h
+                console.h
+                debug.h
+                json-schema-to-grammar.h
+                log.h
+                ngram-cache.h
+                peg-parser.h
+                sampling.h
+                speculative.h
+                jinja/caps.h
+                jinja/lexer.h
+                jinja/parser.h
+                jinja/runtime.h
+                jinja/string.h
+                jinja/utils.h
+                jinja/value.h
+)
+)
 
 set_target_properties(${TARGET} PROPERTIES
     VERSION ${LLAMA_INSTALL_VERSION}
