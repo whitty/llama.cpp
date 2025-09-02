@@ -76,6 +76,7 @@ jobs:
             -DCMAKE_CUDA_ARCHITECTURES="${{ matrix.architectures }}" \
             -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
             -DGGML_NATIVE=OFF \
+            -DGGML_BACKEND_DL=ON \
             -DGGML_CUDA=ON \
             -DGGML_CUDA_CUB_3DOT2=ON \
             -DGGML_CUDA_FA_ALL_QUANTS=ON
