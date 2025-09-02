@@ -194,6 +194,7 @@ add_library(ggml-base
             ../include/ggml-cpp.h
             ../include/ggml-opt.h
             ../include/gguf-reader.h
+            ../include/gguf-reader-file.h
             ../include/gguf.h
             ggml.c
             ggml.cpp
@@ -205,9 +206,11 @@ add_library(ggml-base
             ggml-quants.c
             ggml-quants.h
             gguf.cpp
-            gguf-reader.cpp)
+            gguf-reader.cpp
+            gguf-reader-file.cpp)
 
 target_include_directories(ggml-base PRIVATE .)
+
 if (GGML_BACKEND_DL)
     target_compile_definitions(ggml-base PUBLIC GGML_BACKEND_DL)
 endif()
