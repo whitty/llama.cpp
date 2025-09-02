@@ -38,6 +38,80 @@ concurrency:
   queue: max
 
 jobs:
+  ubuntu-cuda:
+    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+          - ver: 'ubuntu24.04'
+            cuda: '12.8.1'
+            build: '24.04-x64'
+          - ver: 'ubuntu22.04'
+            cuda: '12.8.1'
+            build: '22.04-x64'
+
+    container: nvidia/cuda:${{ matrix.cuda }}-devel-${{ matrix.ver }}
+
+    steps:
+      - name: Install dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+            apt update
+            # zip: Used in packing
+            apt install -y cmake build-essential ninja-build libgomp1 git libcurl4-openssl-dev zip
+
+      - name: Clone
+        id: checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Fixup git checkout
+        run: |
+          git config --global --add safe.directory $(pwd)
+          git rev-parse
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.16
+        with:
+          key: ubuntu-${{ matrix.ver }}-cmake-cuda-${{ matrix.cuda}}
+          evict-old-files: 1d
+
+      - name: Setup cmake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.28.x'
+
+      - name: Build
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CUDA_ARCHITECTURES=89-real \
+            -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+            -DLLAMA_FATAL_WARNINGS=ON \
+            -DGGML_NATIVE=OFF \
+            -DGGML_CUDA=ON
+          cmake --build build
+          cmake --install build --config Release --prefix build/stage
+
+      - name: Determine tag name
+        id: tag
+        uses: ./.github/actions/get-tag-name
+
+      - name: Pack artifacts
+        id: pack_artifacts
+        run: |
+          cp LICENSE licenses/* ./build/stage
+          tar -C build/stage -zcf llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.tar.gz .
+          zip -0 llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.zip llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.tar.gz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          path: llama-${{ steps.tag.outputs.name }}-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.zip
+          name: llama-bin-cuda-${{ matrix.cuda }}-ubuntu-${{ matrix.build }}.zip
+
   windows-cuda:
     runs-on: windows-2022
 
@@ -140,6 +214,7 @@ jobs:
     runs-on: ubuntu-slim
 
     needs:
+      - ubuntu-cuda
       - windows-cuda
 
     steps:
