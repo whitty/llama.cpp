@@ -97,7 +97,8 @@ jobs:
               -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
               -DGGML_NATIVE=OFF \
               -DGGML_CUDA=ON \
-              -DGGML_CUDA_CUB_3DOT2=ON
+              -DGGML_CUDA_CUB_3DOT2=ON \
+              -DGGML_CUDA_FA_ALL_QUANTS=ON
             cmake --build build
             cmake --install build --config Release --prefix build/stage
 
@@ -148,6 +149,7 @@ jobs:
             -DGGML_BACKEND_DL=ON ^
             -DGGML_CPU_ALL_VARIANTS=ON ^
             -DGGML_CUDA=ON ^
+            -DGGML_CUDA_FA_ALL_QUANTS=ON ^
             -DGGML_RPC=ON ^
             -DGGML_CUDA_CUB_3DOT2=ON
           set /A NINJA_JOBS=%NUMBER_OF_PROCESSORS%-1
