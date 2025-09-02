@@ -38,7 +38,7 @@ env:
 jobs:
   cuda:
     runs-on: ubuntu-24.04
-    container: nvidia/cuda:12.6.2-devel-ubuntu24.04
+    container: nvidia/cuda:12.8.1-devel-ubuntu24.04
 
     steps:
       - name: Clone
