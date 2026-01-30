@@ -1,6 +1,7 @@
 #include "clip.h"
 #include "clip-impl.h"
 #include "mtmd.h"
+#include "mtmd-helper.h"
 #include "mtmd-jit.h"
 #include "mtmd-audio.h"
 
