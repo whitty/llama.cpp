@@ -216,7 +216,7 @@ struct mtmd_cli_context {
         }
 
         if (!ctx_vision.get()) {
-            LOG_ERR("Failed to load vision model from %s\n", params.mmproj.path);
+            LOG_ERR("Failed to load vision model from %s\n", params.mmproj.path.c_str());
             exit(1);
         }
     }
