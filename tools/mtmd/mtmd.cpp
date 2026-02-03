@@ -241,6 +241,7 @@ struct mtmd_context {
             /* image_max_tokens  */ ctx_params.image_max_tokens,
             /* clip_reduced_vram */ ctx_params.clip_reduced_vram,
             /* warmup            */ ctx_params.warmup,
+            /* is_video_modality */ is_video_modality,
         };
 
         auto res = clip_init(mmproj_fname, ctx_clip_params);
