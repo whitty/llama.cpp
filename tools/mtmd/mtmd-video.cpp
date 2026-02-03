@@ -106,7 +106,6 @@ bool mtmd_video_extract_frames(const std::string &     video_path,
 
     float original_fps  = 30.0f;  // default
     int   total_frames  = 180;    // default for 6 seconds at 30fps
-    bool  probe_success = false;
 
     if (probe_pipe) {
         char buffer[256];
@@ -115,7 +114,6 @@ bool mtmd_video_extract_frames(const std::string &     video_path,
             int fps_num, fps_den;
             if (sscanf(buffer, "%d/%d,%d", &fps_num, &fps_den, &total_frames) == 3) {
                 original_fps  = (float) fps_num / fps_den;
-                probe_success = true;
             }
         }
 #ifdef _WIN32
