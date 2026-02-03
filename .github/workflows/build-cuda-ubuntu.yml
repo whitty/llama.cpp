@@ -44,7 +44,7 @@ jobs:
           - ver: 'ubuntu24.04'
             cuda: '12.8.1'
             build: '24.04-x64'
-            architectures: '50-real;52-real;60-real;61-real;70-real;75-real;80-real;86-real;89-real;90-real;120-real'
+            architectures: '75-real;80-real;86-real;89-real;90-real;120-real'
 
     container: nvidia/cuda:12.8.1-devel-ubuntu24.04
 

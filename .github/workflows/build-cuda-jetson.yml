@@ -44,7 +44,7 @@ jobs:
           - ver: '36.4.0'
             cuda: '12.6'
             build: 'jp-36.4'
-            architectures: '53-real;72-real;87-real'
+            architectures: '87-real'
 
     container: nvcr.io/nvidia/l4t-jetpack:r${{ matrix.ver }}
     steps:
