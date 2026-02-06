@@ -275,6 +275,8 @@ struct mtmd_cli_context {
     }
 
     bool load_video(const std::string & video_path, float fps = 1.0f, int max_frames = 0, float ts_per_grid = 2.0f) {
+        (void) ts_per_grid;
+
         mtmd_video_opts opts;
         opts.fps = fps;
         opts.max_frames = max_frames;
