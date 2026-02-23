@@ -71,6 +71,8 @@ jobs:
         # TODO: Remove GGML_CUDA_CUB_3DOT2 flag once CCCL 3.2 is bundled within CTK and that CTK version is used in this project
         run: |
           cmake -S . -B build -G Ninja \
+            -DLLAMA_BUILD_APP=OFF \
+            -DLLAMA_BUILD_SERVER=OFF \
             -DLLAMA_FATAL_WARNINGS=ON \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CUDA_ARCHITECTURES="${{ matrix.architectures }}" \
