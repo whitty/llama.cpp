@@ -94,7 +94,19 @@ endif()
 
 # TODO: use list(APPEND LLAMA_COMMON_EXTRA_LIBS ...)
 
-target_sources(${TARGET} PUBLIC FILE_SET common_HEADERS TYPE HEADERS FILES common.h arg.h base64.hpp chat.h console.h sampling.h speculative.h log.h ngram-cache.h json-schema-to-grammar.h)
+target_sources(${TARGET} PUBLIC FILE_SET common_HEADERS TYPE HEADERS FILES
+    common.h
+    arg.h
+    base64.hpp
+    chat.h
+    console.h
+    peg-parser.h
+    sampling.h
+    speculative.h
+    log.h
+    ngram-cache.h
+    json-schema-to-grammar.h
+)
 
 set(LLAMA_COMMON_EXTRA_LIBS build_info)
 

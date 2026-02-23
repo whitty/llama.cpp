@@ -275,6 +275,7 @@ install(TARGETS llama common LIBRARY PUBLIC_HEADER)
 if (LLAMA_BUILD_COMMON)
     install(TARGETS common LIBRARY PUBLIC_HEADER)
     install(TARGETS common FILE_SET common_HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/common)
+    install(TARGETS common FILE_SET common_vendor_HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vendor)
 endif()
 
 configure_package_config_file(
