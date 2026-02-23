@@ -88,6 +88,7 @@ jobs:
           run: |
             cmake -S . -B build -G Ninja \
               -DLLAMA_CURL=OFF \
+              -DLLAMA_HTTPLIB=OFF \
               -DLLAMA_BUILD_SERVER=OFF \
               -DLLAMA_OPENSSL=ON \
               -DLLAMA_FATAL_WARNINGS=ON \
@@ -197,6 +198,7 @@ jobs:
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           cmake -S . -B build -G "Ninja Multi-Config" ^
             -DLLAMA_CURL=OFF ^
+            -DLLAMA_HTTPLIB=OFF ^
             -DLLAMA_BUILD_SERVER=OFF ^
             -DLLAMA_BUILD_BORINGSSL=ON ^
             -DCMAKE_CUDA_ARCHITECTURES=${{ matrix.architectures }} ^
