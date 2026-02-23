@@ -88,6 +88,7 @@ jobs:
           run: |
             cmake -S . -B build -G Ninja \
               -DLLAMA_CURL=OFF \
+              -DLLAMA_BUILD_SERVER=OFF \
               -DLLAMA_OPENSSL=ON \
               -DLLAMA_FATAL_WARNINGS=ON \
               -DCMAKE_BUILD_TYPE=Release \
@@ -147,6 +148,7 @@ jobs:
               -DCMAKE_BUILD_TYPE=Release \
               -DCMAKE_CUDA_ARCHITECTURES="${{ matrix.architectures }}" \
               -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+              -DLLAMA_BUILD_SERVER=OFF \
               -DLLAMA_FATAL_WARNINGS=ON \
               -DGGML_NATIVE=OFF \
               -DGGML_BACKEND_DL=ON \
@@ -194,8 +196,8 @@ jobs:
         run: |
           call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           cmake -S . -B build -G "Ninja Multi-Config" ^
-            -DLLAMA_BUILD_SERVER=ON ^
             -DLLAMA_CURL=OFF ^
+            -DLLAMA_BUILD_SERVER=OFF ^
             -DLLAMA_BUILD_BORINGSSL=ON ^
             -DCMAKE_CUDA_ARCHITECTURES=${{ matrix.architectures }} ^
             -DGGML_NATIVE=OFF ^

@@ -18,7 +18,7 @@ concurrency:
 
 env:
   BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-  CMAKE_ARGS: "-DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_TOOLS=ON -DLLAMA_BUILD_SERVER=ON -DGGML_RPC=ON"
+  CMAKE_ARGS: "-DLLAMA_BUILD_EXAMPLES=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_TOOLS=ON -DLLAMA_BUILD_SERVER=OFF -DGGML_RPC=ON"
 
 jobs:
   ubuntu-cmake-cuda:
@@ -73,6 +73,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CUDA_ARCHITECTURES="${{ matrix.architectures }}" \
             -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+            -DLLAMA_BUILD_SERVER=OFF \
             -DLLAMA_FATAL_WARNINGS=ON \
             -DGGML_NATIVE=OFF \
             -DGGML_BACKEND_DL=ON \
@@ -146,6 +147,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CUDA_ARCHITECTURES="${{ matrix.architectures }}" \
             -DCMAKE_EXE_LINKER_FLAGS=-Wl,--allow-shlib-undefined \
+            -DLLAMA_BUILD_SERVER=OFF \
             -DLLAMA_FATAL_WARNINGS=ON \
             -DGGML_NATIVE=OFF \
             -DGGML_BACKEND_DL=ON \
@@ -216,6 +218,7 @@ jobs:
             -DGGML_CUDA_FA_ALL_QUANTS=ON ^
             -DGGML_CUDA=ON ^
             -DLLAMA_CURL=OFF ^
+            -DLLAMA_BUILD_SERVER=OFF ^
             -DGGML_CUDA_CUB_3DOT2=ON
           set /A NINJA_JOBS=%NUMBER_OF_PROCESSORS%-1
           cmake --build build --config Release -j %NINJA_JOBS% --target ggml-cuda
