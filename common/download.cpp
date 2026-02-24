@@ -1131,23 +1131,23 @@ std::string common_docker_resolve_model(const std::string & docker) {
 
 #else
 
-common_hf_file_res common_get_hf_file(const std::string &, const std::string &, bool, const common_header_list &) {
+[[noreturn]] common_hf_file_res common_get_hf_file(const std::string &, const std::string &, bool, const common_header_list &) {
     throw std::runtime_error("download functionality is not enabled in this build");
 }
 
-bool common_download_model(const common_params_model &, const std::string &, bool, const common_header_list &) {
+[[noreturn]] bool common_download_model(const common_params_model &, const std::string &, bool, const common_header_list &) {
     throw std::runtime_error("download functionality is not enabled in this build");
 }
 
-std::string common_docker_resolve_model(const std::string &) {
+[[noreturn]] std::string common_docker_resolve_model(const std::string &) {
     throw std::runtime_error("download functionality is not enabled in this build");
 }
 
-int common_download_file_single(const std::string &,
-                                const std::string &,
-                                const std::string &,
-                                bool,
-                                const common_header_list &) {
+[[noreturn]] int common_download_file_single(const std::string &,
+                                             const std::string &,
+                                             const std::string &,
+                                             bool,
+                                             const common_header_list &) {
     throw std::runtime_error("download functionality is not enabled in this build");
 }
 

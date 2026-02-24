@@ -53,6 +53,9 @@ struct common_hf_file_res {
  *
  * Note: we use the Ollama-compatible HF API, but not using the blobId. Instead, we use the special "ggufFile" field which returns the value for "hf_file". This is done to be backward-compatible with existing cache files.
  */
+#if !defined(LLAMA_USE_CURL) && !defined(LLAMA_USE_HTTPLIB)
+[[noreturn]]
+#endif // LLAMA_USE_CURL, LLAMA_USE_HTTPLIB
 common_hf_file_res common_get_hf_file(
     const std::string & hf_repo_with_tag,
     const std::string & bearer_token,
@@ -61,6 +64,9 @@ common_hf_file_res common_get_hf_file(
 );
 
 // returns true if download succeeded
+#if !defined(LLAMA_USE_CURL) && !defined(LLAMA_USE_HTTPLIB)
+[[noreturn]]
+#endif // LLAMA_USE_CURL, LLAMA_USE_HTTPLIB
 bool common_download_model(
     const common_params_model & model,
     const std::string & bearer_token,
@@ -73,6 +79,9 @@ std::vector<common_cached_model_info> common_list_cached_models();
 
 // download single file from url to local path
 // returns status code or -1 on error
+#if !defined(LLAMA_USE_CURL) && !defined(LLAMA_USE_HTTPLIB)
+[[noreturn]]
+#endif // LLAMA_USE_CURL, LLAMA_USE_HTTPLIB
 int common_download_file_single(const std::string & url,
                                 const std::string & path,
                                 const std::string & bearer_token,
@@ -81,4 +90,7 @@ int common_download_file_single(const std::string & url,
 
 // resolve and download model from Docker registry
 // return local path to downloaded model file
+#if !defined(LLAMA_USE_CURL) && !defined(LLAMA_USE_HTTPLIB)
+[[noreturn]]
+#endif // LLAMA_USE_CURL, LLAMA_USE_HTTPLIB
 std::string common_docker_resolve_model(const std::string & docker);
