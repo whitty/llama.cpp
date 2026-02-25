@@ -173,6 +173,7 @@ int main(void) {
     assert(params.cpuparams.n_threads == 1010);
 #endif // _WIN32
 
+#if defined(LLAMA_USE_CURL) || defined(LLAMA_USE_HTTPLIB)
     printf("test-arg-parser: test curl-related functions\n\n");
     const char * GOOD_URL = "http://ggml.ai/";
     const char * BAD_URL  = "http://ggml.ai/404";
@@ -203,6 +204,9 @@ int main(void) {
             printf("  expected error: %s\n\n", e.what());
         }
     }
+#else
+    printf("test-arg-parser: skip HTTP tests: not available\n");
+#endif // LLAMA_USE_CURL, LLAMA_USE_HTTPLIB
 
     printf("test-arg-parser: all tests OK\n\n");
 }
