@@ -107,6 +107,10 @@ target_sources(${TARGET} PUBLIC FILE_SET common_HEADERS TYPE HEADERS FILES
     ngram-cache.h
     json-schema-to-grammar.h
 )
+target_sources(${TARGET} PUBLIC FILE_SET common_vendor_HEADERS TYPE HEADERS FILES BASE_DIRS ../vendor FILES
+    ../vendor/nlohmann/json.hpp
+    ../vendor/nlohmann/json_fwd.hpp
+)
 
 set(LLAMA_COMMON_EXTRA_LIBS build_info)
 
