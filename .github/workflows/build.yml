@@ -76,7 +76,6 @@ jobs:
           with:
             key: ubuntu-${{ matrix.ver }}-cmake-cuda-${{ matrix.cuda}}
             evict-old-files: 1d
-            save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
         - name: Setup cmake
           uses: jwlawson/actions-setup-cmake@v2
@@ -178,7 +177,6 @@ jobs:
           key: windows-cuda-${{ matrix.cuda }}
           variant: ccache
           evict-old-files: 1d
-          save: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
 
       - name: Install Cuda Toolkit
         uses: ./.github/actions/windows-setup-cuda
