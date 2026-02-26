@@ -75,7 +75,7 @@ jobs:
           uses: ggml-org/ccache-action@v1.2.16
           with:
             key: ubuntu-${{ matrix.ver }}-cmake-cuda-${{ matrix.cuda}}
-            evict-old-files: 1d
+            evict-old-files: 5d
 
         - name: Setup cmake
           uses: jwlawson/actions-setup-cmake@v2
@@ -135,7 +135,7 @@ jobs:
           uses: hendrikmuhs/ccache-action@v1.2.16
           with:
             key: build-${{ matrix.ver }}-cmake-cuda-${{ matrix.cuda}}-${{ matrix.build }}
-            evict-old-files: 1d
+            evict-old-files: 5d
 
         - name: Setup cmake
           uses: whitty/actions-setup-cmake@linux-aarch64
@@ -176,7 +176,7 @@ jobs:
         with:
           key: windows-cuda-${{ matrix.cuda }}
           variant: ccache
-          evict-old-files: 1d
+          evict-old-files: 5d
 
       - name: Install Cuda Toolkit
         uses: ./.github/actions/windows-setup-cuda
