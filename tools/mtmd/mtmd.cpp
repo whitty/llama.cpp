@@ -41,6 +41,7 @@ struct mtmd_bitmap {
 struct mtmd_image_tokens {
     uint32_t nx; // number of tokens in x direction
     uint32_t ny; // number of tokens in y direction
+    bool isQwenVL2 = false; // REVIEW: to determine position in mrope
     bool use_mrope_pos = false; // use M-RoPE position counting (the whole image is 1 temporal position)
     uint32_t n_tokens() const {
         // For video batches, return total tokens across all frames
@@ -780,6 +781,7 @@ struct mtmd_tokenizer {
                 }
                 image_tokens->batch_f32 = std::move(batch_f32);
                 image_tokens->id = bitmap->id; // optional
+                image_tokens->isQwenVL2 = (ctx->proj_type_v() == PROJECTOR_TYPE_QWEN2VL) || (ctx->proj_type_v() == PROJECTOR_TYPE_QWEN25VL);  // REVIEW: Check Qwen2VL
 
                 LOG_DBG("image_tokens->nx = %d\n", image_tokens->nx);
                 LOG_DBG("image_tokens->ny = %d\n", image_tokens->ny);
@@ -1267,7 +1269,8 @@ llama_pos mtmd_image_tokens_get_n_pos(const mtmd_image_tokens * image_tokens) {
             uint32_t t = image_tokens->total_frames;
             return std::max({t, image_tokens->nx, image_tokens->ny});
         }
-        return std::max(image_tokens->nx, image_tokens->ny);
+
+        return image_tokens->isQwenVL2 ? 1 : std::max(image_tokens->nx, image_tokens->ny);
     }
     return image_tokens->n_tokens();
 }
