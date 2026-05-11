@@ -2904,6 +2904,22 @@ bool clip_image_preprocess(struct clip_ctx * ctx, const clip_image_u8 * img, str
 
         case PROJECTOR_TYPE_QWEN2VL:
         case PROJECTOR_TYPE_QWEN25VL:
+            {
+                // REVIEW: Compatibility with b6337:
+                clip_image_u8 resized;
+                const int     align_size    = params.patch_size * 2;
+                const int     max_dimension = params.image_size;
+                const float   scale = std::min(1.0f, std::min(static_cast<float>(max_dimension) / original_size.width,
+                                                              static_cast<float>(max_dimension) / original_size.height));
+                const int     aligned_width    = CLIP_ALIGN(static_cast<int>(original_size.width * scale), align_size);
+                const int     aligned_height   = CLIP_ALIGN(static_cast<int>(original_size.height * scale), align_size);
+                const clip_image_size new_size = { aligned_width, aligned_height };
+                img_tool::resize(*img, resized, new_size, img_tool::RESIZE_ALGO_BICUBIC, false);
+                // clip_image_save_to_bmp(resized, "preproc.bmp");
+                clip_image_f32_ptr img_f32(clip_image_f32_init());
+                normalize_image_u8_to_f32(resized, *img_f32, params.image_mean, params.image_std);
+                res_imgs->entries.push_back(std::move(img_f32));
+            } break;
         case PROJECTOR_TYPE_QWEN3VL:
         case PROJECTOR_TYPE_GLM4V:
             {
