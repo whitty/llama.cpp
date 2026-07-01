@@ -68,6 +68,7 @@ extern "C" {
     };
 
     struct gguf_context;
+    struct gguf_reader_impl_factory;
 
     struct gguf_init_params {
         bool no_alloc;
@@ -86,6 +87,8 @@ extern "C" {
 
     // max_chunk_read is the maximum number of bytes that the GGUF code will read at once from the callback, a value of 0 means no limit
     GGML_API struct gguf_context * gguf_init_from_callback(gguf_reader_callback_t callback, void * userdata, size_t max_chunk_read, uint64_t max_expected_size, struct gguf_init_params params);
+
+    GGML_API void gguf_set_default_reader_impl(struct gguf_reader_impl_factory * factory);
 
     GGML_API void gguf_free(struct gguf_context * ctx);
 
