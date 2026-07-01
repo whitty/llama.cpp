@@ -222,7 +222,7 @@ struct gguf_context * gguf_init_empty(void) {
 }
 
 template<typename T>
-bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct gguf_kv> & kv, const std::string & key, const bool is_array, const size_t n) {
+bool gguf_read_emplace_helper(struct gguf_reader & gr, std::vector<struct gguf_kv> & kv, const std::string & key, const bool is_array, const size_t n) {
     if (is_array) {
         std::vector<T> value;
         try {
@@ -247,7 +247,7 @@ bool gguf_read_emplace_helper(const struct gguf_reader & gr, std::vector<struct 
     return true;
 }
 
-static struct gguf_context * gguf_init_from_reader(const struct gguf_reader & gr, struct gguf_init_params params) {
+static struct gguf_context * gguf_init_from_reader(struct gguf_reader & gr, struct gguf_init_params params) {
     struct gguf_context * ctx = new gguf_context;
 
     bool ok = true;
@@ -697,7 +697,7 @@ struct gguf_context * gguf_init_from_callback(gguf_reader_callback_t callback, v
         return nullptr;
     }
 
-    const struct gguf_reader gr(callback, userdata, max_chunk_read == 0 ? SIZE_MAX : max_chunk_read, 0, max_expected_size);
+    struct gguf_reader gr(callback, userdata, max_chunk_read == 0 ? SIZE_MAX : max_chunk_read, 0, max_expected_size);
     return gguf_init_from_reader(gr, params);
 }
 
@@ -738,7 +738,7 @@ struct gguf_context * gguf_init_from_file_ptr(FILE * file, struct gguf_init_para
         /*.file   = */ file,
         /*.offset = */ static_cast<uint64_t>(cur),
     };
-    const struct gguf_reader gr(gguf_file_reader_callback, &reader, SIZE_MAX, reader.offset, gguf_reader::file_remain(file));
+    struct gguf_reader gr(gguf_file_reader_callback, &reader, SIZE_MAX, reader.offset, gguf_reader::file_remain(file));
     return gguf_init_from_reader(gr, params);
 }
 
@@ -771,7 +771,7 @@ struct gguf_context * gguf_init_from_buffer(const void * data, size_t size, stru
         /*.data = */ static_cast<const uint8_t *>(data),
         /*.size = */ size,
     };
-    const struct gguf_reader gr(gguf_buffer_reader_callback, &reader, SIZE_MAX, 0, size);
+    struct gguf_reader gr(gguf_buffer_reader_callback, &reader, SIZE_MAX, 0, size);
     return gguf_init_from_reader(gr, params);
 }
 

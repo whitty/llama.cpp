@@ -24,7 +24,7 @@ gguf_reader_impl::gguf_reader_impl(gguf_reader_callback_t callback,
 {
 }
 
-size_t gguf_reader_impl::read_raw(void * dst, size_t size) const {
+size_t gguf_reader_impl::read_raw(void * dst, size_t size) {
     if (callback == nullptr || size == 0) {
         return 0;
     }
@@ -57,7 +57,7 @@ size_t gguf_reader_impl::read_raw(void * dst, size_t size) const {
     return total_nread;
 }
 
-bool gguf_reader_impl::seek(uint64_t absolute_offset) const {
+bool gguf_reader_impl::seek(uint64_t absolute_offset) {
     const uint64_t end_offset = uint64_t(data_offset) + nbytes_remain;
     if (absolute_offset > end_offset) {
         return false;
@@ -113,7 +113,7 @@ uint64_t gguf_reader::file_remain(FILE * file) {
     return static_cast<uint64_t>(end - cur);
 }
 
-bool gguf_reader::read(bool & dst) const {
+bool gguf_reader::read(bool & dst) {
     int8_t tmp = -1;
     if (!read(tmp)) {
         return false;
@@ -122,7 +122,7 @@ bool gguf_reader::read(bool & dst) const {
     return true;
 }
 
-bool gguf_reader::read(enum ggml_type & dst) const {
+bool gguf_reader::read(enum ggml_type & dst) {
     int32_t tmp = -1;
     if (!read(tmp)) {
         return false;
@@ -131,7 +131,7 @@ bool gguf_reader::read(enum ggml_type & dst) const {
     return true;
 }
 
-bool gguf_reader::read(enum gguf_type & dst) const {
+bool gguf_reader::read(enum gguf_type & dst) {
     int32_t tmp = -1;
     if (!read(tmp)) {
         return false;
@@ -140,7 +140,7 @@ bool gguf_reader::read(enum gguf_type & dst) const {
     return true;
 }
 
-bool gguf_reader::read(std::string & dst) const {
+bool gguf_reader::read(std::string & dst) {
     uint64_t size = 0;
     if (!read(size)) {
         return false;
@@ -157,18 +157,18 @@ bool gguf_reader::read(std::string & dst) const {
     return read_raw(dst.data(), static_cast<size_t>(size)) == size;
 }
 
-bool gguf_reader::read(void * dst, const size_t size) const {
+bool gguf_reader::read(void * dst, const size_t size) {
     if (size > impl->remaining()) {
         return false;
     }
     return read_raw(dst, size) == size;
 }
 
-size_t gguf_reader::read_raw(void * dst, size_t size) const {
+size_t gguf_reader::read_raw(void * dst, size_t size) {
     return impl->read_raw(dst, size);
 }
 
-bool gguf_reader::seek(uint64_t absolute_offset) const {
+bool gguf_reader::seek(uint64_t absolute_offset) {
     return impl->seek(absolute_offset);
 }
 
