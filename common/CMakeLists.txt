@@ -146,6 +146,15 @@ target_sources(${TARGET}
                 jinja/utils.h
                 jinja/value.h
 )
+
+target_sources(${TARGET}
+    PUBLIC
+        FILE_SET vendor_HEADERS
+        TYPE HEADERS
+        BASE_DIRS ../vendor
+        FILES
+            ../vendor/nlohmann/json.hpp
+            ../vendor/nlohmann/json_fwd.hpp
 )
 
 set_target_properties(${TARGET} PROPERTIES
