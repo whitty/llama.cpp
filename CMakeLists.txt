@@ -247,6 +247,7 @@ if (LLAMA_BUILD_COMMON)
     install(TARGETS llama-common
         LIBRARY
         FILE_SET HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/common
+        FILE_SET vendor_HEADERS DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/vendor
     )
 endif()
 
