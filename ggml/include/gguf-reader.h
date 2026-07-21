@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -76,7 +77,8 @@ struct GGML_API_CLASS gguf_reader_impl_factory {
                                                         void * userdata,
                                                         size_t max_chunk_read,
                                                         uint64_t data_offset = 0,
-                                                        uint64_t nbytes_remain = 0) = 0;
+                                                        uint64_t nbytes_remain = 0,
+                                                        const std::filesystem::path& file_path = {}) = 0;
 };
 
 struct GGML_API_CLASS gguf_reader
@@ -85,7 +87,8 @@ struct GGML_API_CLASS gguf_reader
                 void * userdata,
                 size_t max_chunk_read,
                 uint64_t data_offset = 0,
-                uint64_t nbytes_remain = 0);
+                uint64_t nbytes_remain = 0,
+                const std::filesystem::path& file_path = {});
 
     // helper for remaining bytes in a file
     static uint64_t file_remain(FILE * file);
