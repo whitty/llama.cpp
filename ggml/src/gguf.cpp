@@ -783,8 +783,23 @@ struct gguf_context * gguf_init_from_file(const char * fname, struct gguf_init_p
         return nullptr;
     }
 
-    struct gguf_context * result = gguf_init_from_file_ptr(file, params);
+    const int64_t cur = gguf_ftell(file);
+
+    if (cur < 0) {
+        return nullptr;
+    }
+
+    gguf_file_reader reader = {
+        /*.file   = */ file,
+        /*.offset = */ static_cast<uint64_t>(cur),
+    };
+
+    struct gguf_reader gr(gguf_file_reader_callback, &reader, SIZE_MAX, reader.offset, gguf_reader::file_remain(file), fname);
+
+    struct gguf_context * result = gguf_init_from_reader(gr, params);
+
     fclose(file);
+
     return result;
 }
 
