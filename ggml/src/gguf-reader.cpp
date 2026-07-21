@@ -7,6 +7,7 @@
 #include <cinttypes>
 #include <cstddef>
 #include <cstdio>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
@@ -74,7 +75,11 @@ struct default_impl_factory : public gguf_reader_impl_factory {
                                                 void * userdata,
                                                 size_t max_chunk_read,
                                                 uint64_t data_offset,
-                                                uint64_t nbytes_remain) override {
+                                                uint64_t nbytes_remain,
+                                                const std::filesystem::path& file_path) override {
+        // Unused
+        (void) file_path;
+
         return std::make_unique<gguf_reader_impl>(callback, userdata, max_chunk_read, data_offset, nbytes_remain);
     }
 };
@@ -87,8 +92,9 @@ gguf_reader::gguf_reader(gguf_reader_callback_t callback,
                          void * userdata,
                          size_t max_chunk_read,
                          uint64_t data_offset,
-                         uint64_t nbytes_remain)
-:   impl(impl_factory->build_for(callback, userdata, max_chunk_read, data_offset, nbytes_remain))
+                         uint64_t nbytes_remain,
+                         const std::filesystem::path& file_path)
+:   impl(impl_factory->build_for(callback, userdata, max_chunk_read, data_offset, nbytes_remain, file_path))
 {
     GGML_ASSERT(max_chunk_read > 0);
 }
