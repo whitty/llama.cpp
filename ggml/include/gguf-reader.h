@@ -146,14 +146,42 @@ struct GGML_API_CLASS gguf_reader
     bool read(std::string & dst);
     bool read(void * dst, size_t size);
 
+    // read up to `size` bytes, returning the number of bytes actually read
+    virtual size_t read_raw(void * dst, size_t size);
+
     bool seek(uint64_t absolute_offset);
+
+    uint64_t remaining() const {
+        return impl->remaining();
+    }
 
     uint64_t tell() const {
         return impl->tell();
     }
 
 private:
-    virtual size_t read_raw(void * dst, size_t size);
-
     std::unique_ptr<gguf_reader_impl> impl;
+};
+
+// Random-access reader over the raw bytes of the file at `file_path`, for callers that need the file's
+// contents rather than its GGUF metadata (tensor data, most notably). All reads go through `gguf_reader`,
+// so an externally supplied implementation (see `gguf_set_default_reader_impl()`) serves them.
+struct GGML_API_CLASS gguf_path_reader {
+    // `file_path` is UTF-8 encoded, as for `gguf_init_from_file()`; throws std::runtime_error if it cannot be opened
+    explicit gguf_path_reader(const char * file_path);
+    ~gguf_path_reader();
+
+    // total size of the file, as reported by the reader
+    uint64_t size() const;
+
+    uint64_t tell() const;
+
+    bool seek(uint64_t absolute_offset);
+
+    // returns the number of bytes read, which is less than `size` only at end of file
+    size_t read_raw(void * dst, size_t size);
+
+private:
+    struct impl;
+    std::unique_ptr<impl> pimpl;
 };

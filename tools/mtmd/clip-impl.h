@@ -2,6 +2,7 @@
 
 #include "ggml.h"
 #include "gguf.h"
+#include "gguf-reader.h"
 #include "clip.h"
 
 #include <array>
@@ -684,6 +685,62 @@ static std::ifstream open_ifstream_binary(const std::string & fname) {
     return std::ifstream(fname, std::ios::binary);
 }
 #endif
+
+// Reads the raw bytes of a model file. Where an implementation has been installed by
+// gguf_set_default_reader_impl(), it serves the reads, so that all of a model file is read through it; a plain
+// std::ifstream is used otherwise. Only the small part of the std::ifstream interface that clip needs is offered.
+struct clip_model_file {
+    explicit clip_model_file(const std::string & fname) {
+        if (gguf_has_custom_reader_impl()) {
+            try {
+                reader = std::make_unique<gguf_path_reader>(fname.c_str());
+            } catch (const std::exception & err) {
+                LOG_ERR("%s: %s\n", __func__, err.what());
+            }
+            ok = reader != nullptr;
+        } else {
+            fin = open_ifstream_binary(fname);
+            ok  = fin.is_open();
+        }
+    }
+
+    explicit operator bool() const {
+        return ok && (reader != nullptr || bool(fin));
+    }
+
+    void seekg(uint64_t offset, std::ios_base::seekdir dir) {
+        GGML_ASSERT(dir == std::ios::beg);
+
+        if (reader) {
+            ok = ok && reader->seek(offset);
+            return;
+        }
+
+        fin.seekg(offset, dir);
+    }
+
+    void read(void * dst, size_t size) {
+        if (reader) {
+            ok = ok && reader->read_raw(dst, size) == size;
+            return;
+        }
+
+        fin.read(static_cast<char *>(dst), size);
+    }
+
+    void close() {
+        reader.reset();
+
+        if (fin.is_open()) {
+            fin.close();
+        }
+    }
+
+private:
+    std::ifstream fin;
+    std::unique_ptr<gguf_path_reader> reader;
+    bool ok = false; // the file opened, and every read of it has succeeded
+};
 
 static std::string string_format(const char * fmt, ...) {
     va_list ap;

@@ -5,6 +5,8 @@
 #include <vector>
 #include <cstdio>
 
+struct gguf_path_reader;
+
 struct llama_file;
 struct llama_mmap;
 struct llama_mlock;
@@ -38,6 +40,10 @@ struct llama_file {
 private:
     struct impl;
     std::unique_ptr<impl> pimpl;
+
+    // reads the file through the externally supplied gguf_reader implementation; null unless one has been
+    // installed, in which case direct I/O and mmap must not be used, as they would bypass it
+    std::unique_ptr<gguf_path_reader> reader;
 };
 
 struct llama_mmap {

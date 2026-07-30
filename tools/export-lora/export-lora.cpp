@@ -1,6 +1,7 @@
 #include "ggml.h"
 #include "ggml-alloc.h"
 #include "gguf.h"
+#include "gguf-reader.h"
 
 #include "arg.h"
 #include "common.h"
@@ -62,16 +63,12 @@ static struct gguf_context * load_gguf(std::string & fname, struct ggml_context 
 struct file_input {
     struct ggml_context * ctx_meta = nullptr;
     struct gguf_context * ctx_gguf = nullptr;
-    std::ifstream f_in;
+    gguf_path_reader f_in;
     std::map<std::string, ggml_tensor *> tensors;
     float alpha;
     float scale;
 
-    file_input(std::string & fname, float scale): f_in(fname, std::ios::binary), scale(scale) {
-        if (!f_in.is_open()) {
-            throw std::runtime_error("failed to open input gguf from " + fname);
-        }
-
+    file_input(std::string & fname, float scale): f_in(fname.c_str()), scale(scale) {
         ctx_gguf = load_gguf(fname, &ctx_meta);
         alpha = get_kv_f32(ctx_gguf, "adapter.lora.alpha");
         printf("%s: loaded gguf from %s\n", __func__, fname.c_str());
@@ -102,8 +99,9 @@ struct file_input {
         }
         auto i_tensor_in = gguf_find_tensor(ctx_gguf, name.c_str()); // idx of tensor in the input file
         auto offset = gguf_get_data_offset(ctx_gguf) + gguf_get_tensor_offset(ctx_gguf, i_tensor_in);
-        f_in.seekg(offset);
-        f_in.read((char* )buf.data(), len);
+        if (!f_in.seek(offset) || f_in.read_raw(buf.data(), len) != len) {
+            throw std::runtime_error("failed to read data of tensor with name: " + name);
+        }
     }
 
     ~file_input() {

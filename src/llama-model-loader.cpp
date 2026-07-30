@@ -542,6 +542,13 @@ llama_model_loader::llama_model_loader(
 
     tensor_buft_overrides = param_tensor_buft_overrides_p;
 
+    if (gguf_has_custom_reader_impl() && !fname.empty()) {
+        // an externally supplied gguf_reader implementation serves every read of the model files, so we must
+        // not read them by any other means
+        use_mmap      = false;
+        use_direct_io = false;
+    }
+
     if (!fname.empty()) {
         // Load the main GGUF
         struct ggml_context * ctx = NULL;

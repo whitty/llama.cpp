@@ -90,6 +90,10 @@ extern "C" {
 
     GGML_API void gguf_set_default_reader_impl(struct gguf_reader_impl_factory * factory);
 
+    // true if an implementation has been installed by gguf_set_default_reader_impl(); when it has, all reads of
+    // a model file must be served by it, so the callers of the reader must not read the file by any other means
+    GGML_API bool gguf_has_custom_reader_impl(void);
+
     GGML_API void gguf_free(struct gguf_context * ctx);
 
     GGML_API const char * gguf_type_name(enum gguf_type type);

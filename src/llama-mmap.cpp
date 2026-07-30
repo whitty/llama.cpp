@@ -3,6 +3,7 @@
 #include "llama-impl.h"
 
 #include "ggml.h"
+#include "gguf-reader.h"
 
 #include <cstring>
 #include <climits>
@@ -396,17 +397,20 @@ struct llama_file::impl {
 };
 
 llama_file::llama_file(const char * fname, const char * mode, const bool use_direct_io) :
-    pimpl(std::make_unique<impl>(fname, mode, use_direct_io)) {}
+    pimpl(std::make_unique<impl>(fname, mode, use_direct_io)),
+    reader(gguf_has_custom_reader_impl() && std::strcmp(mode, "rb") == 0
+               ? std::make_unique<gguf_path_reader>(fname)
+               : nullptr) {}
 
 llama_file::llama_file(FILE * file) : pimpl(std::make_unique<impl>(file)) {}
 
 llama_file::~llama_file() = default;
 
-size_t llama_file::tell() const { return pimpl->tell(); }
-size_t llama_file::size() const { return pimpl->size; }
+size_t llama_file::tell() const { return reader ? reader->tell() : pimpl->tell(); }
+size_t llama_file::size() const { return reader ? reader->size() : pimpl->size; }
 
-size_t llama_file::read_alignment() const { return pimpl->read_alignment(); }
-bool llama_file::has_direct_io() const { return pimpl->has_direct_io(); }
+size_t llama_file::read_alignment() const { return reader ? 1 : pimpl->read_alignment(); }
+bool llama_file::has_direct_io() const { return reader ? false : pimpl->has_direct_io(); }
 
 int llama_file::file_id() const {
 #ifdef _WIN32
@@ -423,15 +427,50 @@ int llama_file::file_id() const {
 #endif
 }
 
-void llama_file::seek(size_t offset, int whence) const { pimpl->seek(offset, whence); }
-void llama_file::read_raw(void * ptr, size_t len) { pimpl->read_raw(ptr, len); }
-#ifdef _WIN32
-void llama_file::read_raw_unsafe(void * ptr, size_t len) { pimpl->read_raw(ptr, len); }
-#else
-void llama_file::read_raw_unsafe(void * ptr, size_t len) { pimpl->read_raw_unsafe(ptr, len); }
-#endif
+void llama_file::seek(size_t offset, int whence) const {
+    if (reader) {
+        const uint64_t origin = whence == SEEK_SET ? 0 : (whence == SEEK_CUR ? reader->tell() : reader->size());
+        if (!reader->seek(origin + offset)) {
+            throw std::runtime_error("seek error: past end of file");
+        }
 
-uint32_t llama_file::read_u32() { return pimpl->read_u32(); }
+        return;
+    }
+
+    pimpl->seek(offset, whence);
+}
+
+void llama_file::read_raw(void * ptr, size_t len) {
+    if (reader) {
+        if (reader->read_raw(ptr, len) != len) {
+            throw std::runtime_error("unexpectedly reached end of file");
+        }
+
+        return;
+    }
+
+    pimpl->read_raw(ptr, len);
+}
+
+void llama_file::read_raw_unsafe(void * ptr, size_t len) {
+    if (reader) {
+        read_raw(ptr, len);
+
+        return;
+    }
+
+#ifdef _WIN32
+    pimpl->read_raw(ptr, len);
+#else
+    pimpl->read_raw_unsafe(ptr, len);
+#endif
+}
+
+uint32_t llama_file::read_u32() {
+    uint32_t val;
+    read_raw(&val, sizeof(val));
+    return val;
+}
 
 void llama_file::write_raw(const void * ptr, size_t len) const { pimpl->write_raw(ptr, len); }
 void llama_file::write_u32(uint32_t val) const { pimpl->write_u32(val); }

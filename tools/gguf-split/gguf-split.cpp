@@ -5,6 +5,7 @@
 
 #include "ggml.h"
 #include "gguf.h"
+#include "gguf-reader.h"
 
 #include <algorithm>
 #include <cinttypes>
@@ -195,9 +196,20 @@ static void zeros(std::ofstream & file, size_t n) {
     }
 }
 
+// opens `fname` for reading through gguf_reader, so that an externally supplied implementation serves the
+// reads; returns nullptr, having reported why, if it cannot be opened
+static std::unique_ptr<gguf_path_reader> open_input(const char * fname) {
+    try {
+        return std::make_unique<gguf_path_reader>(fname);
+    } catch (const std::exception & err) {
+        fprintf(stderr, "%s: %s\n", __func__, err.what());
+        return nullptr;
+    }
+}
+
 struct split_strategy {
     const split_params params;
-    std::ifstream & f_input;
+    gguf_path_reader & f_input;
     struct gguf_context * ctx_gguf;
     struct ggml_context * ctx_meta = NULL;
     const int n_tensors;
@@ -209,7 +221,7 @@ struct split_strategy {
     std::vector<uint8_t> read_buf;
 
     split_strategy(const split_params & params,
-            std::ifstream & f_input,
+            gguf_path_reader & f_input,
             struct gguf_context * ctx_gguf,
             struct ggml_context * ctx_meta) :
         params(params),
@@ -350,13 +362,15 @@ struct split_strategy {
         }
     }
 
-    void copy_file_to_file(std::ifstream & f_in, std::ofstream & f_out, const size_t in_offset, const size_t len) {
+    void copy_file_to_file(gguf_path_reader & f_in, std::ofstream & f_out, const size_t in_offset, const size_t len) {
         // TODO: detect OS and use copy_file_range() here for better performance
         if (read_buf.size() < len) {
             read_buf.resize(len);
         }
-        f_in.seekg(in_offset);
-        f_in.read((char *)read_buf.data(), len);
+        if (!f_in.seek(in_offset) || f_in.read_raw(read_buf.data(), len) != len) {
+            fprintf(stderr, "%s: failed to read %zu bytes at offset %zu of the input GGUF\n", __func__, len, in_offset);
+            exit(EXIT_FAILURE);
+        }
         f_out.write((const char *)read_buf.data(), len);
     }
 };
@@ -369,8 +383,8 @@ static void gguf_split(const split_params & split_params) {
         /*.ctx      = */ &ctx_meta,
     };
 
-    std::ifstream f_input(split_params.input.c_str(), std::ios::binary);
-    if (!f_input.is_open()) {
+    auto f_input = open_input(split_params.input.c_str());
+    if (!f_input) {
         fprintf(stderr, "%s:  failed to open input GGUF from %s\n", __func__, split_params.input.c_str());
         exit(EXIT_FAILURE);
     }
@@ -382,7 +396,7 @@ static void gguf_split(const split_params & split_params) {
     }
 
     // prepare the strategy
-    split_strategy strategy(split_params, f_input, ctx_gguf, ctx_meta);
+    split_strategy strategy(split_params, *f_input, ctx_gguf, ctx_meta);
     int n_split = strategy.ctx_outs.size();
     strategy.print_info();
 
@@ -393,7 +407,7 @@ static void gguf_split(const split_params & split_params) {
 
     // done, clean up
     gguf_free(ctx_gguf);
-    f_input.close();
+    f_input.reset();
 
     fprintf(stderr, "%s: %d gguf split written with a total of %d tensors.\n",
             __func__, n_split, strategy.n_tensors);
@@ -511,8 +525,8 @@ static void gguf_merge(const split_params & split_params) {
     // Write tensors data
     for (int i_split = 0; i_split < n_split; i_split++) {
         llama_split_path(split_path, sizeof(split_path), split_prefix, i_split, n_split);
-        std::ifstream f_input(split_path, std::ios::binary);
-        if (!f_input.is_open()) {
+        auto f_input = open_input(split_path);
+        if (!f_input) {
             fprintf(stderr, "%s:  failed to open input GGUF from %s\n", __func__, split_path);
             for (uint32_t i = 0; i < ctx_ggufs.size(); i++) {
                 gguf_free(ctx_ggufs[i]);
@@ -541,8 +555,10 @@ static void gguf_merge(const split_params & split_params) {
             }
 
             auto offset = gguf_get_data_offset(ctx_gguf) + gguf_get_tensor_offset(ctx_gguf, i_tensor);
-            f_input.seekg(offset);
-            f_input.read((char *)read_data.data(), n_bytes);
+            if (!f_input->seek(offset) || f_input->read_raw(read_data.data(), n_bytes) != n_bytes) {
+                fprintf(stderr, "%s: failed to read tensor %s from %s\n", __func__, t_name, split_path);
+                exit(EXIT_FAILURE);
+            }
             if (!split_params.dry_run) {
                 // write tensor data + padding
                 fout.write((const char *)read_data.data(), n_bytes);
@@ -552,7 +568,7 @@ static void gguf_merge(const split_params & split_params) {
 
         gguf_free(ctx_gguf);
         ggml_free(ctx_meta);
-        f_input.close();
+        f_input.reset();
         fprintf(stderr, "\033[3Ddone\n");
     }
 

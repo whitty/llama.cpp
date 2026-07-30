@@ -4,11 +4,15 @@
 #include "ggml-impl.h"
 #include "gguf.h"
 
+#include <cerrno>
 #include <cinttypes>
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <filesystem>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -180,4 +184,73 @@ bool gguf_reader::seek(uint64_t absolute_offset) {
 
 void gguf_set_default_reader_impl(struct gguf_reader_impl_factory * factory) {
     impl_factory = factory ? factory : &default_factory;
+}
+
+bool gguf_has_custom_reader_impl(void) {
+    return impl_factory != &default_factory;
+}
+
+struct gguf_path_reader::impl {
+    // the file backing the default reader implementation; `reader` is declared after it so that it is
+    // constructed once `read_callback` can be serviced
+    FILE *   file   = nullptr;
+    uint64_t offset = 0; // current offset of `file`
+
+    gguf_reader reader;
+
+    impl(const char * file_path, FILE * file, uint64_t nbytes)
+    :   file(file),
+        reader(read_callback, this, SIZE_MAX, 0, nbytes, file_path)
+    {
+    }
+
+    ~impl() {
+        if (file != nullptr) {
+            fclose(file);
+        }
+    }
+
+    static size_t read_callback(void * userdata, void * output, uint64_t offset, size_t len) {
+        impl & self = *static_cast<impl *>(userdata);
+
+        if (self.offset != offset) {
+            if (offset > INT64_MAX || gguf_fseek(self.file, static_cast<int64_t>(offset), SEEK_SET) != 0) {
+                return 0;
+            }
+
+            self.offset = offset;
+        }
+
+        const size_t nread = fread(output, 1, len, self.file);
+        self.offset += nread;
+        return nread;
+    }
+};
+
+gguf_path_reader::gguf_path_reader(const char * file_path) {
+    FILE * file = ggml_fopen(file_path, "rb");
+
+    if (file == nullptr) {
+        throw std::runtime_error(std::string("failed to open ") + file_path + ": " + strerror(errno));
+    }
+
+    pimpl = std::make_unique<impl>(file_path, file, gguf_reader::file_remain(file));
+}
+
+gguf_path_reader::~gguf_path_reader() = default;
+
+uint64_t gguf_path_reader::size() const {
+    return pimpl->reader.tell() + pimpl->reader.remaining();
+}
+
+uint64_t gguf_path_reader::tell() const {
+    return pimpl->reader.tell();
+}
+
+bool gguf_path_reader::seek(uint64_t absolute_offset) {
+    return pimpl->reader.seek(absolute_offset);
+}
+
+size_t gguf_path_reader::read_raw(void * dst, size_t size) {
+    return pimpl->reader.read_raw(dst, size);
 }
