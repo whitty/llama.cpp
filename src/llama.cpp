@@ -509,7 +509,18 @@ int32_t llama_split_path(
     int32_t split_no,
     int32_t split_count) {
 
-    static const char * const SPLIT_PATH_FORMAT = "%s-%05d-of-%05d.gguf";
+    return llama_split_path_ext(split_path, maxlen, path_prefix, split_no, split_count, ".gguf");
+}
+
+int32_t llama_split_path_ext(
+    char * split_path,
+    size_t maxlen,
+    const char * path_prefix,
+    int32_t split_no,
+    int32_t split_count,
+    const char * path_ext) {
+
+    static const char * const SPLIT_PATH_FORMAT = "%s-%05d-of-%05d%s";
 
     const int written = snprintf(
         split_path,
@@ -517,7 +528,8 @@ int32_t llama_split_path(
         SPLIT_PATH_FORMAT,
         path_prefix,
         split_no + 1,
-        split_count
+        split_count,
+        path_ext
     );
 
     if (written < 0 || (size_t) written >= maxlen) {
@@ -527,6 +539,36 @@ int32_t llama_split_path(
     return (int32_t) written;
 }
 
+// locate the "-NNNNN-of-MMMMM" marker for split_no / split_count in split_path, which must be preceded by a
+// non-empty prefix and followed by a file extension (a '.' and at least one character, with no path separator)
+// on success, sets the length of the prefix and the position at which the extension starts
+static bool llama_split_parse(
+    const std::string & split_path,
+    int32_t split_no,
+    int32_t split_count,
+    size_t & size_prefix,
+    size_t & pos_ext) {
+
+    char marker[32];
+    snprintf(marker, sizeof(marker), "-%05d-of-%05d", split_no + 1, split_count);
+
+    const size_t pos = split_path.rfind(marker);
+    if (pos == std::string::npos || pos == 0) {
+        return false;
+    }
+
+    const size_t ext = pos + strlen(marker);
+    if (ext + 1 >= split_path.size() || split_path[ext] != '.' ||
+        split_path.find_first_of("/\\", ext) != std::string::npos) {
+        return false;
+    }
+
+    size_prefix = pos;
+    pos_ext     = ext;
+
+    return true;
+}
+
 int32_t llama_split_prefix(
     char * split_prefix,
     size_t maxlen,
@@ -534,26 +576,36 @@ int32_t llama_split_prefix(
     int32_t split_no,
     int32_t split_count) {
 
-    const std::string str_split_path(split_path);
+    size_t size_prefix = 0;
+    size_t pos_ext     = 0;
 
-    char postfix[32];
-    snprintf(postfix, sizeof(postfix), "-%05d-of-%05d.gguf", split_no + 1, split_count);
-
-    const std::string str_postfix(postfix);
-    if (str_split_path.size() <= str_postfix.size()) {
+    if (!llama_split_parse(split_path, split_no, split_count, size_prefix, pos_ext)) {
         return 0;
     }
 
-    const size_t size_prefix = str_split_path.size() - str_postfix.size();
+    const size_t copy_len = std::min(size_prefix + 1, maxlen);
+    snprintf(split_prefix, copy_len, "%s", split_path);
 
-    if (str_split_path.compare(size_prefix, std::string::npos, str_postfix) == 0) {
-        const size_t copy_len = std::min(size_prefix + 1, maxlen);
-        snprintf(split_prefix, copy_len, "%s", split_path);
+    return (int32_t) size_prefix;
+}
 
-        return (int32_t) size_prefix;
+int32_t llama_split_ext(
+    char * split_ext,
+    size_t maxlen,
+    const char * split_path,
+    int32_t split_no,
+    int32_t split_count) {
+
+    size_t size_prefix = 0;
+    size_t pos_ext     = 0;
+
+    if (!llama_split_parse(split_path, split_no, split_count, size_prefix, pos_ext)) {
+        return 0;
     }
 
-    return 0;
+    snprintf(split_ext, maxlen, "%s", split_path + pos_ext);
+
+    return (int32_t) strlen(split_path + pos_ext);
 }
 
 const char * llama_print_system_info(void) {

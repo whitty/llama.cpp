@@ -78,9 +78,11 @@ const char * llama_ftype_name(llama_ftype ftype) {
 
 // return a list of splits for a given path
 // for example, given "<name>-00002-of-00004.gguf", returns list of all 4 splits
+// the file extension is kept, so it need not be ".gguf"
 static std::vector<std::string> llama_get_list_splits(const std::string & path, const int idx, const int n_split) {
     std::vector<std::string> paths;
     std::string split_prefix;
+    std::string split_ext;
     std::vector<char> buf(llama_path_max(), 0);
 
     {
@@ -89,6 +91,12 @@ static std::vector<std::string> llama_get_list_splits(const std::string & path, 
             throw std::runtime_error(format("invalid split file name: %s", path.c_str()));
         }
         split_prefix = std::string(buf.data(), ret);
+
+        ret = llama_split_ext(buf.data(), buf.size(), path.c_str(), idx, n_split);
+        if (!ret) {
+            throw std::runtime_error(format("invalid split file name: %s", path.c_str()));
+        }
+        split_ext = std::string(buf.data(), ret);
     }
 
     if (split_prefix.empty()) {
@@ -96,7 +104,7 @@ static std::vector<std::string> llama_get_list_splits(const std::string & path, 
     }
 
     for (int idx = 0; idx < n_split; ++idx) {
-        int ret = llama_split_path(buf.data(), buf.size(), split_prefix.c_str(), idx, n_split);
+        int ret = llama_split_path_ext(buf.data(), buf.size(), split_prefix.c_str(), idx, n_split, split_ext.c_str());
         paths.push_back(std::string(buf.data(), ret));
     }
 

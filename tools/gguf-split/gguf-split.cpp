@@ -436,6 +436,7 @@ static void gguf_merge(const split_params & split_params) {
     char split_path[PATH_MAX] = {0};
     strncpy(split_path, split_params.input.c_str(), sizeof(split_path) - 1);
     char split_prefix[PATH_MAX] = {0};
+    char split_ext[PATH_MAX] = {0};
 
     // First pass to find KV and tensors metadata
     for (int i_split = 0; i_split < n_split; i_split++) {
@@ -447,7 +448,7 @@ static void gguf_merge(const split_params & split_params) {
         };
 
         if (i_split > 0) {
-            llama_split_path(split_path, sizeof(split_path), split_prefix, i_split, n_split);
+            llama_split_path_ext(split_path, sizeof(split_path), split_prefix, i_split, n_split, split_ext);
         }
         fprintf(stderr, "%s: reading metadata %s ...", __func__, split_path);
 
@@ -484,8 +485,9 @@ static void gguf_merge(const split_params & split_params) {
                 exit(EXIT_FAILURE);
             }
 
-            // Verify the file naming and extract split_prefix
-            if (!llama_split_prefix(split_prefix, sizeof (split_prefix), split_path, i_split, n_split)) {
+            // Verify the file naming and extract split_prefix and split_ext
+            if (!llama_split_prefix(split_prefix, sizeof (split_prefix), split_path, i_split, n_split) ||
+                !llama_split_ext(split_ext, sizeof (split_ext), split_path, i_split, n_split)) {
                 fprintf(stderr, "\n%s: unexpected input file name: %s"
                                 " i_split=%d"
                                 " n_split=%d\n", __func__,
@@ -524,7 +526,7 @@ static void gguf_merge(const split_params & split_params) {
 
     // Write tensors data
     for (int i_split = 0; i_split < n_split; i_split++) {
-        llama_split_path(split_path, sizeof(split_path), split_prefix, i_split, n_split);
+        llama_split_path_ext(split_path, sizeof(split_path), split_prefix, i_split, n_split, split_ext);
         auto f_input = open_input(split_path);
         if (!f_input) {
             fprintf(stderr, "%s:  failed to open input GGUF from %s\n", __func__, split_path);
